@@ -4,7 +4,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
 import { DialectModule } from './dialect/dialect.module';
-
+import { ContentModule } from './content/content.module';
+import { LikeModule } from './like/like.module';
+import { CommentModule } from './comment/comment.module';
 import { AuthModule } from './common/module/auth/auth.module';
 import { RedisUseModule } from './common/module/redis/redis.module'; // 导入 Redis 模块
 
@@ -25,6 +27,9 @@ import { RedisUseModule } from './common/module/redis/redis.module'; // 导入 R
     AuthModule,
     UserModule,
     DialectModule,
+    LikeModule,
+    CommentModule,
+    ContentModule,
   ],
   controllers: [AppController],
   providers: [AppService],
