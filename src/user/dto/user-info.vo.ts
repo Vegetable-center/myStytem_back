@@ -4,7 +4,6 @@ export interface SimpleUserVO {
   id: number;
   username: string;
   avatar: string;
-  nickname?: string; // 昵称（可选）
 }
 
 // 用户帖子VO（复用你已有的ContentItemVO）
@@ -16,7 +15,6 @@ export interface UserInfoVO {
   id: number;
   username: string;
   avatar: string;
-  nickname: string;
   signature?: string; // 个性签名（可选）
   createdAt: Date; // 注册时间
   // 关联数据

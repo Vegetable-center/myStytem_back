@@ -1,5 +1,5 @@
 
-import { Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -14,6 +14,7 @@ import { ResponseDto } from '../common/dto/response.dto';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { RedisBlacklistService } from '../common/module/redis/redis-blacklist.service';
+import { UserRole, UserStatus } from './enum';
 
 @Injectable()
 export class UserService {
@@ -55,6 +56,8 @@ export class UserService {
     const newUser = this.userRepository.create({
       ...registerDto,
       password: hashedPassword,
+      status: UserStatus.NORMAL, // 强制默认正常
+      role: UserRole.USER,       // 强制默认普通用户
     });
 
     await this.userRepository.save(newUser);
@@ -198,7 +201,7 @@ export class UserService {
     const followings: SimpleUserVO[] = followedUserIds.length
       ? await this.userRepository
           .createQueryBuilder('user')
-          .select(['user.id', 'user.username', 'user.avatar', 'user.nickname'])
+          .select(['user.id', 'user.username', 'user.avatar'])
           .where('user.id IN (:...ids)', { ids: followedUserIds })
           .getMany()
       : [];
@@ -215,7 +218,7 @@ export class UserService {
     const followers: SimpleUserVO[] = followerUserIds.length
       ? await this.userRepository
           .createQueryBuilder('user')
-          .select(['user.id', 'user.username', 'user.avatar', 'user.nickname'])
+          .select(['user.id', 'user.username', 'user.avatar'])
           .where('user.id IN (:...ids)', { ids: followerUserIds })
           .getMany()
       : [];
@@ -269,5 +272,94 @@ export class UserService {
   // 根据用户名查找用户（供守卫鉴权使用）
   async findByUsername(username: string) {
     return await this.userRepository.findOne({ where: { username } });
+  }
+
+  // ✅ 新增：管理员获取所有用户（包含封禁用户）
+  // -------------------------------------------------------------------------
+  async findAllForAdmin() {
+    const users = await this.userRepository.find({
+      select: ['id', 'username', 'avatar', 'status', 'role', 'createdAt'],
+      order: { id: 'DESC' },
+    });
+
+    return {
+      success: true,
+      data: users,
+    };
+  }
+
+  // -------------------------------------------------------------------------
+  // ✅ 新增：封禁用户
+  // -------------------------------------------------------------------------
+  async banUser(userId: number) {
+    if (isNaN(userId) || !Number.isInteger(userId) || userId <= 0) {
+      throw new BadRequestException('无效的用户ID');
+    }
+
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('用户不存在');
+    }
+    if (user.status === UserStatus.BANNED) {
+      throw new ForbiddenException('用户已经是封禁状态');
+    }
+    if (user.role === UserRole.ADMIN) {
+      throw new ForbiddenException('不能封禁管理员'); // ✅ 保护管理员
+    }
+
+    user.status = UserStatus.BANNED;
+    await this.userRepository.save(user);
+    return { success: true, message: '用户封禁成功' };
+  }
+
+  // -------------------------------------------------------------------------
+  // ✅ 新增：解封用户
+  // -------------------------------------------------------------------------
+  async unbanUser(userId: number) {
+    if (isNaN(userId) || !Number.isInteger(userId) || userId <= 0) {
+      throw new BadRequestException('无效的用户ID');
+    }
+
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('用户不存在');
+    }
+    if (user.status === UserStatus.NORMAL) {
+      throw new ForbiddenException('用户已经是正常状态');
+    }
+
+    user.status = UserStatus.NORMAL;
+    await this.userRepository.save(user);
+    return { success: true, message: '用户解封成功' };
+  }
+
+  // -------------------------------------------------------------------------
+  // ✅ 新增：设置用户角色（普通用户/管理员）
+  // -------------------------------------------------------------------------
+  async setUserRole(userId: number, role: UserRole) {
+    if (isNaN(userId) || !Number.isInteger(userId) || userId <= 0) {
+      throw new BadRequestException('无效的用户ID');
+    }
+    if (!Object.values(UserRole).includes(role)) {
+      throw new BadRequestException('无效的用户角色');
+    }
+
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('用户不存在');
+    }
+
+    user.role = role;
+    await this.userRepository.save(user);
+    return { success: true, message: '用户角色设置成功' };
+  }
+  async getBannedCount() {
+    const count = await this.userRepository.count({
+      where: { status: UserStatus.BANNED },
+    });
+    return {
+      success: true,
+      data: { count },
+    };
   }
 }
