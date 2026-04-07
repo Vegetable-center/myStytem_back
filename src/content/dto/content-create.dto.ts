@@ -17,6 +17,5 @@ export class CreateContentDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(255, { message: '封面图URL不能超过255个字符' })
   coverImage?: string;
 }

@@ -2,6 +2,7 @@
 export interface ContentItemVO {
   id: number;
   title: string;
+  status?: string;
   content: string;
   category: string;
   coverImage: string | null;
