@@ -1,6 +1,7 @@
 // src/modules/post/entities/post.entity.ts
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
+import { PostStatus } from '../enum';
 
 @Entity('contents')
 export class Content {
@@ -34,6 +35,14 @@ export class Content {
 
   @Column({ type: 'bigint', name: 'user_id' })
   userId: number;
+
+  @Column({
+    type: 'enum',
+    enum: PostStatus,
+    default: PostStatus.BANNED, // 新创建的帖子默认封禁
+    comment: '帖子状态：normal-正常，banned-封禁',
+  })
+  status: PostStatus;
 
   @CreateDateColumn({ type: 'datetime', name: 'created_at' })
   createdAt: Date;
