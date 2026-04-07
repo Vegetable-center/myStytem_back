@@ -6,6 +6,7 @@ import { RedisBlacklistService } from './common/module/redis/redis-blacklist.ser
 import cookieParser from 'cookie-parser';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { VIDEO_STORAGE_DIR, COVER_IMAGE_STORAGE_DIR } from './config/file-upload.config'; // 新增封面图目录
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -35,6 +36,12 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/', // 访问前缀：http://localhost:3000/uploads/xxx.rtf
   });
+
+  // 视频静态资源（原有）
+  app.useStaticAssets(VIDEO_STORAGE_DIR, { prefix: '/uploads/course-videos/' });
+  // 新增：封面图静态资源
+  app.useStaticAssets(COVER_IMAGE_STORAGE_DIR, { prefix: '/uploads/course-covers/' });
+
 
   app.enableCors({
     origin: 'http://localhost:5173',

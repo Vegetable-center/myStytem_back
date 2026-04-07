@@ -7,6 +7,11 @@ import { DialectModule } from './dialect/dialect.module';
 import { ContentModule } from './content/content.module';
 import { LikeModule } from './like/like.module';
 import { CommentModule } from './comment/comment.module';
+import { PointsModule } from './point/point.module';
+import { CheckinModule } from './checkin/checkin.module';
+import { MallModule } from './mall/mall.module';
+import { CourseModule } from './course/course.module';
+import { MessageModule } from './message/message.module';
 import { AuthModule } from './common/module/auth/auth.module';
 import { RedisUseModule } from './common/module/redis/redis.module'; // 导入 Redis 模块
 
@@ -29,6 +34,11 @@ import { RedisUseModule } from './common/module/redis/redis.module'; // 导入 R
     DialectModule,
     LikeModule,
     CommentModule,
+    PointsModule,
+    CheckinModule,
+    MallModule,
+    CourseModule,
+    MessageModule,
     ContentModule,
   ],
   controllers: [AppController],
